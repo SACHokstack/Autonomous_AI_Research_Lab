@@ -162,9 +162,14 @@ cython_debug/
 *.ipr
 *.iws
 
-# VS Code
+# VS Code (user-specific, should not be committed)
 .vscode/
 *.code-workspace
+
+# Project-specific
+.pytest_cache/
+.coverage
+htmlcov/
 
 # MacOS
 .DS_Store
@@ -247,3 +252,10 @@ secrets.json
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Archive files
+*.zip
+*.tar.gz
+*.tar
+*.rar
+*.7z
