@@ -1,0 +1,13 @@
+# .clinerules
+project_name: Prometheus Lab
+goals:
+  - Help improve robustness experiments for hospital readmission.
+  - Use Python tooling (venv, pip) and our existing src/ pipeline.
+constraints:
+  - Do not remove or rename existing experiment JSON files.
+  - Ask before changing StrategyConfig schema.
+tools:
+  - terminal
+  - editor
+preferred_language: python
+ 

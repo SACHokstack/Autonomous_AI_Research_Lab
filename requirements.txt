@@ -1,0 +1,6 @@
+pandas
+numpy
+scikit-learn
+tableshift
+scipy
+oumi-sdk
