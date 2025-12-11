@@ -127,6 +127,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+tsenv/
 
 # Spyder project settings
 .spyderproject
@@ -213,7 +214,7 @@ mlruns/
 .mlflow/
 
 # Large data files (if they can be downloaded or regenerated)
-# Uncomment if you want to exclude large data files
+data/
 # data/*.csv
 # data/*.json
 # data/*.parquet
