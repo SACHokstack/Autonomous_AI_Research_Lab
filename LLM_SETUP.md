@@ -11,16 +11,11 @@ cd prometheus-lab
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Oumi API Key
-You need to set the `OUMI_API_KEY` environment variable:
 
-```bash
-export OUMI_API_KEY='your-api-key-here'
-```
 
 To make this permanent, add the above line to your `~/.bashrc` or `~/.zshrc` file.
 
-### 3. Run the Agent Loop with LLM
+### 2. Run the Agent Loop with LLM
 
 To run one cycle with LLM-generated strategies:
 ```bash
