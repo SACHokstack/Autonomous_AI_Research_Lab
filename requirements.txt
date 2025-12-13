@@ -4,3 +4,5 @@ scikit-learn
 tableshift
 scipy
 oumi-sdk
+langgraph 
+langchain-groq

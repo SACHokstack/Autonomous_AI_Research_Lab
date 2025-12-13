@@ -17,7 +17,13 @@ EXPERIMENTS_DIR = Path(__file__).resolve().parents[1] / "experiments"
 
 
 def encode_labels(y: pd.Series):
-    return y.apply(lambda v: 0 if v == "NO" else 1)
+    # Check if labels are already numeric (COMPAS) or need encoding (diabetes)
+    if y.dtype in ['int64', 'int32', 'float64', 'float32']:
+        # Already numeric, no encoding needed
+        return y
+    else:
+        # String labels (diabetes dataset), encode them
+        return y.apply(lambda v: 0 if v == "NO" else 1)
 
 
 def run_experiment(config: StrategyConfig):
@@ -28,8 +34,10 @@ def run_experiment(config: StrategyConfig):
     X_train, y_train, X_id_test, y_id_test, X_ood, y_ood = ds.make_splits()
 
     # Keep metadata columns for grouping before any feature dropping
-    meta_id_test = X_id_test[["sex", "er_flag"]]
-    meta_ood_test = X_ood[["sex", "er_flag"]]
+    ds = get_dataset()
+    group_cols = ['sex', 'race']  # COMPAS groups
+    meta_id_test = X_id_test[group_cols].copy()
+    meta_ood_test = X_ood[group_cols].copy()
 
     y_train_enc = encode_labels(y_train)
     y_id_enc = encode_labels(y_id_test)
