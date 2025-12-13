@@ -8,16 +8,23 @@ def summarize_best(runs: List[Dict[str, Any]]) -> str:
     ranked = rank_by_ood_accuracy(runs)
     best = ranked[0]
     cfg = best["config"]
+    ood = best["ood"]
     id_acc = best["id"]["accuracy"]
-    ood_acc = best["ood"]["accuracy"]
-    gap = id_acc - ood_acc
+    ood_acc = ood["accuracy"]
+    gap = ood_acc - id_acc
 
-    return (
+    result = (
         f"Best robust strategy so far: {cfg['name']}\n"
         f"  ID accuracy:  {id_acc:.3f}\n"
         f"  OOD accuracy: {ood_acc:.3f}\n"
         f"  ID–OOD gap:   {gap:.3f}\n"
     )
+    
+    wga = ood.get("worst_group_accuracy")
+    if wga is not None:
+        result += f"  Worst‑group OOD accuracy: {wga:.3f}\n"
+    
+    return result
 
 if __name__ == "__main__":
     runs = load_all_runs()

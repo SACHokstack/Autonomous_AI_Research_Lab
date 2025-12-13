@@ -1,59 +1,35 @@
-"""
-Module for formatting experiment results into text for LLM prompts.
-"""
-import json
-from pathlib import Path
 from typing import List, Dict, Any
 
-EXPERIMENTS_DIR = Path(__file__).resolve().parents[1] / "experiments"
-
-
-def load_experiment_results() -> List[Dict[str, Any]]:
-    """Load all experiment result JSON files."""
-    results = []
-    
-    if not EXPERIMENTS_DIR.exists():
-        return results
-    
-    for json_file in EXPERIMENTS_DIR.glob("*.json"):
-        try:
-            with open(json_file, 'r') as f:
-                data = json.load(f)
-                results.append(data)
-        except (json.JSONDecodeError, IOError):
-            continue
-    
-    return results
-
+from .results_store import load_all_runs
 
 def results_to_text() -> str:
     """
     Convert experiment results to formatted text for insertion into prompt.
-    Returns a markdown table with key metrics.
+    Returns a markdown-style table with key metrics.
     """
-    results = load_experiment_results()
-    
+    results: List[Dict[str, Any]] = load_all_runs()
+
     if not results:
         return "No experiment results available yet."
-    
-    # Build markdown table
+
     lines = []
-    lines.append("| Experiment | ID Accuracy | OOD Accuracy | Robustness Gap |")
-    lines.append("|------------|-------------|--------------|----------------|")
-    
-    for result in results:
-        name = result.get("name", "unknown")
-        metrics = result.get("metrics", {})
-        
-        id_acc = metrics.get("id_accuracy", 0.0) * 100
-        ood_acc = metrics.get("ood_accuracy", 0.0) * 100
+    lines.append("| Strategy | ID Accuracy | OOD Accuracy | Robustness Gap | Worst Group Acc |")
+    lines.append("|----------|-------------|--------------|----------------|-----------------|")
+
+    for r in results:
+        cfg = r.get("config", {})
+        name = cfg.get("name", "unknown")
+
+        id_acc = r.get("id", {}).get("accuracy", 0.0) * 100
+        ood_acc = r.get("ood", {}).get("accuracy", 0.0) * 100
         gap = abs(id_acc - ood_acc)
-        
-        lines.append(f"| {name} | {id_acc:.1f}% | {ood_acc:.1f}% | {gap:.1f}% |")
-    
+
+        wga = r["ood"].get("worst_group_accuracy")
+        wga_str = f"{wga:.3f}" if wga is not None else "n/a"
+
+        lines.append(f"| {name} | {id_acc:.1f}% | {ood_acc:.1f}% | {gap:.1f}% | {wga_str} |")
+
     return "\n".join(lines)
 
-
 if __name__ == "__main__":
-    # Test the function
     print(results_to_text())

@@ -1,13 +1,22 @@
-# .clinerules
+# Cline Rules for Prometheus Lab
+
 project_name: Prometheus Lab
+
 goals:
-  - Help improve robustness experiments for hospital readmission.
-  - Use Python tooling (venv, pip) and our existing src/ pipeline.
+  - Help build and maintain an ML robustness agent on tabular datasets.
+  - Prefer editing code under src/ and prompts/ only.
+  - Use python3.10, venv at .venv, and pip for packages.
+
 constraints:
-  - Do not remove or rename existing experiment JSON files.
-  - Ask before changing StrategyConfig schema.
-tools:
+  - Do NOT delete or overwrite experiments/*.json.
+  - Ask before changing StrategyConfig fields.
+  - Keep run_experiment and StrategyConfig backward compatible.
+
+default_tools:
   - terminal
   - editor
-preferred_language: python
- 
+
+entry_points:
+  - "src/simple_agent_loop.py"
+  - "src/run_experiment.py"
+  - "prompts/strategy_prompt.md"

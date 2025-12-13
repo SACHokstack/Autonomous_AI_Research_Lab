@@ -17,10 +17,15 @@ Section 1: Problem Context (Static - same every time)
 - Poor OOD performance = missed readmissions = patient harm + hospital penalties
 
 **Evaluation Metrics:**
-- ID Accuracy: Performance on training domains
-- OOD Accuracy: Performance on held-out ER domain
-- Robustness Gap: |ID - OOD| (lower is better)
-- Target: OOD ≥ 85% with gap < 5%
+- **Primary Target:** Worst Group Accuracy (WGA) on OOD - accuracy of the worst-performing subgroup (Sex × ER history)
+- **Secondary Target:** Overall OOD Accuracy - performance on held-out ER domain
+- **Constraint:** Robustness Gap |ID - OOD| should remain small
+- **Success Criterion:** A strategy is only considered better if it improves WGA and does not significantly hurt OOD accuracy.
+
+**Why WGA Matters:**
+- Models can achieve high overall accuracy while failing on minority subgroups.
+- Clinical fairness requires good performance across all patient demographics.
+- Worst-group performance determines real-world reliability.
 
 Section 2: Current Experimental Results (Dynamic - updates each cycle)
 # Experimental Results (Cycle 1)
@@ -88,47 +93,72 @@ Section 4: Your Task (Static - instructions)
 Based on the experimental results above, propose 3-5 NEW training strategies to test.
 
 **Requirements:**
-1. Each strategy should address observed weaknesses
-2. Explain your reasoning (why will this help?)
-3. Be specific about hyperparameters
-4. Consider combinations of techniques
+1. **Primary Goal:** Improve Worst Group Accuracy (WGA) on OOD.
+2. **Secondary Goal:** Optimize OOD accuracy and keep ID–OOD gap small.
+3. A strategy is only considered better if it improves WGA and does not significantly hurt OOD.
+4. Explain your reasoning (why will this help WGA specifically?).
+5. Be specific about hyperparameters.
+6. Consider combinations of techniques.
+
+**Critical Rules for Strategy Design:**
+1. **Group DRO Naming Convention:** If the strategy name contains "group_dro", you MUST set `"use_group_dro": true` in the config.
+2. **Fairness Focus:** At least HALF of your proposals should be explicitly fairness/robustness-oriented.
+   - Examples: "group_dro_*", "class_balanced_*", "importance_sampling_*", "worst_group_*"
+3. **Aggressive Exploration:** Propose strategies that:
+   - Aggressively reweight or resample worst-performing groups.
+   - Try stronger regularization (vary `l2_C` parameter from 0.1 to 10).
+   - Experiment with `sample_frac` (0.3 to 1.0) to shift focus towards hard groups.
+   - Use `undersample_majority` to balance classes.
+4. **Avoid Baseline-Like Strategies:** Do not propose many similar vanilla strategies. Be bold in targeting group fairness.
 
 **Output Format:**
-Return a JSON list of strategy configs:
+You must output a JSON list of StrategyConfig objects. Each StrategyConfig must include:
 
+```json
 {
-  "hypotheses": [
-    {
-      "name": "descriptive_name",
-      "reasoning": "Why this might work based on results...",
-      "strategy_type": "reweighting|robust_loss|ensemble|regularization|domain_gen",
-      "config": {
-        "method": "specific_method",
-        "params": {
-          "param1": value1,
-          "param2": value2
-        }
-      },
-      "expected_improvement": "What metric should improve and why"
-    }
-  ]
+  "name": "descriptive_name",
+  "sample_frac": 0.3-1.0,
+  "undersample_majority": true/false,
+  "l2_C": 0.1-10.0,
+  "use_group_dro": true/false,
+  "class_weight": null/"balanced",
+  "reg_strength": "weak"/"normal"/"strong"
 }
+```
+
+**IMPORTANT:** If strategy name contains "group_dro", set `"use_group_dro": true`
 
 **Example:**
-{
-  "hypotheses": [
-    {
-      "name": "group_dro_with_regularization",
-      "reasoning": "Group DRO had smallest gap (3.6%) but OOD still low (76.2%). Adding L2 regularization may prevent overfitting while maintaining robustness.",
-      "strategy_type": "robust_loss",
-      "config": {
-        "method": "group_dro",
-        "params": {
-          "step_size": 0.01,
-          "l2_penalty": 0.01
-        }
-      },
-      "expected_improvement": "OOD should reach 80%+ while maintaining <5% gap"
-    }
-  ]
-}
+```json
+[
+  {
+    "name": "group_dro_with_strong_regularization",
+    "sample_frac": 1.0,
+    "undersample_majority": false,
+    "l2_C": 0.1,
+    "use_group_dro": true,
+    "class_weight": null,
+    "reg_strength": "strong"
+  },
+  {
+    "name": "aggressive_class_balanced_with_undersampling",
+    "sample_frac": 0.5,
+    "undersample_majority": true,
+    "l2_C": 1.0,
+    "use_group_dro": false,
+    "class_weight": "balanced",
+    "reg_strength": "normal"
+  },
+  {
+    "name": "group_dro_with_minority_focus",
+    "sample_frac": 0.7,
+    "undersample_majority": true,
+    "l2_C": 0.5,
+    "use_group_dro": true,
+    "class_weight": null,
+    "reg_strength": "normal"
+  }
+]
+```
+
+**Reasoning:** Focus on strategies that directly address worst-group performance through reweighting, resampling, or group-aware training.

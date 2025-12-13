@@ -1,24 +1,46 @@
-from typing import Dict
+from typing import Dict, Optional, Any
 
-def is_better(new: Dict, best: Dict, tol: float = 0.01, min_imp: float = 0.02) -> bool:
+# Hard baselines from run_baseline_test.json
+BASELINE_WGA = 0.526
+BASELINE_OOD = 0.586
+
+def run_score(run: Dict[str, Any]) -> float:
     """
-    Decide if new strategy is better than best, focusing on OOD robustness.
+    Scoring function for agent selection.
+    
+    Rubric:
+    - Must not regress significantly on OOD accuracy or Worst-Group Accuracy (WGA) compared to baseline.
+    - If valid, score is weighted combination of WGA (primary) and OOD (secondary).
     """
-    id_new = new["id"]["accuracy"]
-    ood_new = new["ood"]["accuracy"]
-    id_best = best["id"]["accuracy"]
-    ood_best = best["ood"]["accuracy"]
+    id_acc = run["id"]["accuracy"]
+    ood_acc = run["ood"]["accuracy"]
+    wga = run["ood"].get("worst_group_accuracy", ood_acc)
+    
+    # Gap is less important if WGA is high, but still good to track
+    gap = abs(id_acc - ood_acc)
 
-    # 1) Don't tank ID too much
-    if id_new < id_best - tol:
-        return False
+    # 1. Hard constraints (with small tolerance)
+    # If a run drops WGA or OOD below baseline, it's not a "better" strategy for our goal
+    if wga < BASELINE_WGA - 0.005 or ood_acc < BASELINE_OOD - 0.005:
+        return -1.0
 
-    # 2) Improve OOD enough
-    if ood_new <= ood_best + min_imp:
-        return False
+    # 2. Nonlinear scoring to reward high WGA
+    # We really want to boost the worst group. 
+    # Squaring WGA makes improvements in the 0.5->0.6 range worth more than 0.2->0.3.
+    
+    alpha = 0.8   # Emphasis on Worst Group
+    beta = 0.18   # Emphasis on overall OOD
+    gamma = 0.02  # Penalty for ID-OOD gap
 
-    # 3) Prefer smaller ID–OOD gap
-    gap_new = abs(id_new - ood_new)
-    gap_best = abs(id_best - ood_best)
+    score = alpha * (wga ** 2) + beta * ood_acc - gamma * gap
+    return score
 
-    return gap_new < gap_best
+def is_better(new_run: Dict[str, Any], best_run: Optional[Dict[str, Any]], min_imp: float = 0.001) -> bool:
+    """
+    Returns True if new_run has a higher score than best_run.
+    """
+    if best_run is None:
+        # Only accept if it meets the baseline floor
+        return run_score(new_run) > 0.0
+    
+    return run_score(new_run) > run_score(best_run) + min_imp

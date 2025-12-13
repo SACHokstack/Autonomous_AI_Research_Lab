@@ -11,10 +11,6 @@ cd prometheus-lab
 pip install -r requirements.txt
 ```
 
-
-
-To make this permanent, add the above line to your `~/.bashrc` or `~/.zshrc` file.
-
 ### 2. Run the Agent Loop with LLM
 
 To run one cycle with LLM-generated strategies:
@@ -54,8 +50,7 @@ python -m src.simple_agent_loop
 ### ImportError: oumi-sdk not found
 Run: `pip install oumi-sdk`
 
-### ValueError: OUMI_API_KEY not set
-Make sure you've exported the API key: `export OUMI_API_KEY='your-key'`
+
 
 ### LLM returns invalid JSON
 The system will catch the error and fall back to heuristic strategy generation automatically.

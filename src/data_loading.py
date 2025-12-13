@@ -14,6 +14,10 @@ def load_diabetes_readmission():
     label_col = "readmitted"        # adjust if your CSV uses a different name
     domain_col = "admission_source_id"  # or "admission_source" depending on file
 
+    # Add derived columns for grouping
+    df["sex"] = df["gender"]
+    df["er_flag"] = (df["number_emergency"] > 0).astype(int)  # Had any ER visit in prior year
+
     return df, label_col, domain_col
 
 if __name__ == "__main__":
