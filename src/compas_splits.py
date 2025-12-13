@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from pathlib import Path
 
+
 DATA_PATH = Path(__file__).resolve().parents[2] / "data" / "compas-scores-two-years.csv"
 
 def load_compas():
