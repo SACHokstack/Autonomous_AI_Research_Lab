@@ -13,7 +13,7 @@ from .analyze_results import load_all_runs
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='static')
 UPLOAD_DIR = Path("uploads")
 RESULTS_DIR = Path("results")
 
@@ -39,20 +39,7 @@ logger.info("🎯 Flask app initialization complete")
 @app.route('/', methods=['GET'])
 def index():
     logger.info("🏠 GET / - Serving homepage")
-    return '''
-    <!DOCTYPE html>
-    <html>
-    <head><title>Autonomous Fairness Agent</title></head>
-    <body>
-        <h1>🚀 Autonomous Fairness Agent</h1>
-        <p>Upload ANY CSV → Auto-detect groups → Optimize worst_group_accuracy</p>
-        <form method="post" enctype="multipart/form-data">
-            <input type="file" name="csv_file" accept=".csv" required>
-            <button type="submit">Analyze & Optimize</button>
-        </form>
-    </body>
-    </html>
-    '''
+    return render_template('index.html')
 
 @app.route('/', methods=['POST'])
 def upload_csv():
@@ -99,29 +86,18 @@ def upload_csv():
         best_run = max(runs, key=lambda r: r["ood"]["worst_group_accuracy"])
         logger.info(f"🏆 Best run: worst_group_accuracy = {best_run['ood']['worst_group_accuracy']:.4f}")
 
-        return f'''
-        <!DOCTYPE html>
-        <html>
-        <head><title>Results</title></head>
-        <body>
-            <h1>✅ Analysis Complete!</h1>
-            <h2>Dataset: {csv_path.name}</h2>
+        # Prepare template data
+        template_data = {
+            'dataset_name': csv_path.name,
+            'best_run': best_run,
+            'timestamp': timestamp,
+            'num_experiments': len(runs),
+            'num_groups': len(best_run["ood"]["group_accuracy"]) if "group_accuracy" in best_run["ood"] else 0,
+            'num_samples': 'N/A',  # Could be extracted from dataset if needed
+            'num_features': 'N/A'   # Could be extracted from dataset if needed
+        }
 
-            <h3>Best Strategy</h3>
-            <pre>{best_run["config"]}</pre>
-
-            <h3>Performance</h3>
-            <p>ID Accuracy: {best_run["id"]["accuracy"]:.4f}</p>
-            <p>OOD Accuracy: {best_run["ood"]["accuracy"]:.4f}</p>
-            <p><b>Worst Group Accuracy: {best_run["ood"]["worst_group_accuracy"]:.4f}</b></p>
-
-            <h3>Group Breakdown</h3>
-            <pre>{best_run["ood"]["group_accuracy"]}</pre>
-
-            <a href="/download/{timestamp}" class="btn">📥 Download Results</a>
-        </body>
-        </html>
-        '''
+        return render_template('results.html', **template_data)
     except Exception as e:
         logger.error(f"❌ Error during processing: {str(e)}")
         logger.error(f"📋 Full traceback:\n{traceback.format_exc()}")

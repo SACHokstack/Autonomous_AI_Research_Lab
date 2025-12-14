@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Research Results - Prometheus Lab{% endblock %}
+
+{% block content %}
+<!-- Success Header -->
+<div class="card">
+    <div style="text-align: center; padding: 2rem 0;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+        <h1 style="color: var(--success-color); margin-bottom: 1rem;">Fairness Analysis Complete!</h1>
+        <p style="font-size: 1.2rem; color: var(--text-dark);">
+            Advanced AI agents have optimized your model for fairness across demographic groups
+        </p>
+        <div class="research-badge">Multi-Agent Optimization</div>
+        <div class="research-badge">Fairness Research</div>
+        <div class="research-badge">Distribution Shift</div>
+    </div>
+</div>
+
+<!-- Dataset Information -->
+<div class="card">
+    <h2 style="color: var(--primary-color); margin-bottom: 1.5rem;">
+        📊 Dataset Analysis: {{ dataset_name }}
+    </h2>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ num_samples|default('N/A') }}</div>
+            <div class="stat-label">Total Samples</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ num_features|default('N/A') }}</div>
+            <div class="stat-label">Features</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ num_groups|default('N/A') }}</div>
+            <div class="stat-label">Demographic Groups</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ num_experiments|default('1') }}</div>
+            <div class="stat-label">Experiments Run</div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="card">
+    <h2 style="color: var(--primary-color); margin-bottom: 1.5rem;">
+        🎯 Model Performance Metrics
+    </h2>
+
+    <div class="metric-grid">
+        <div class="metric-item" style="border-left-color: var(--success-color);">
+            <div class="metric-value">{{ "%.3f"|format(best_run.ood.worst_group_accuracy) }}</div>
+            <div class="metric-name">Worst Group Accuracy</div>
+        </div>
+        <div class="metric-item" style="border-left-color: var(--primary-color);">
+            <div class="metric-value">{{ "%.3f"|format(best_run.ood.accuracy) }}</div>
+            <div class="metric-name">Overall OOD Accuracy</div>
+        </div>
+        <div class="metric-item" style="border-left-color: var(--secondary-color);">
+            <div class="metric-value">{{ "%.3f"|format(best_run.id.accuracy) }}</div>
+            <div class="metric-name">In-Distribution Accuracy</div>
+        </div>
+        <div class="metric-item" style="border-left-color: var(--accent-color);">
+            <div class="metric-value">{{ "%.3f"|format(best_run.id.accuracy - best_run.ood.accuracy) }}</div>
+            <div class="metric-name">ID-OOD Gap</div>
+        </div>
+    </div>
+
+    <!-- Performance Visualization -->
+    <div style="margin-top: 2rem;">
+        <canvas id="performanceChart" width="400" height="200"></canvas>
+    </div>
+</div>
+
+<!-- Optimal Strategy -->
+<div class="card">
+    <h2 style="color: var(--primary-color); margin-bottom: 1.5rem;">
+        🚀 Optimal Training Strategy
+    </h2>
+
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; align-items: start;">
+        <div>
+            <h3 style="color: var(--text-dark); margin-bottom: 1rem;">Strategy Configuration</h3>
+            <div class="alert alert-success">
+                <h4>{{ best_run.config.name }}</h4>
+                <p style="margin-top: 0.5rem;">Optimized by AI agents for fairness and robustness</p>
+            </div>
+        </div>
+
+        <div>
+            <h3 style="color: var(--text-dark); margin-bottom: 1rem;">Technical Parameters</h3>
+            <div class="code-block">
+{
+    "strategy_name": "{{ best_run.config.name }}",
+    "class_weight": "{{ best_run.config.class_weight|default('None') }}",
+    "l2_regularization": {{ best_run.config.l2_C|default('1.0') }},
+    "sample_fraction": {{ best_run.config.sample_frac|default('1.0') }},
+    "undersample_majority": {{ best_run.config.undersample_majority|lower|default('false') }},
+    "regularization_strength": "{{ best_run.config.reg_strength|default('normal') }}",
+    "use_group_dro": {{ best_run.config.use_group_dro|lower|default('false') }}
+}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Group Fairness Analysis -->
+<div class="card">
+    <h2 style="color: var(--primary-color); margin-bottom: 1.5rem;">
+        ⚖️ Demographic Group Analysis
+    </h2>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div>
+            <h3 style="color: var(--text-dark); margin-bottom: 1rem;">Group-Specific Performance</h3>
+            <canvas id="groupChart" width="400" height="300"></canvas>
+        </div>
+
+        <div>
+            <h3 style="color: var(--text-dark); margin-bottom: 1rem;">Fairness Breakdown</h3>
+            <div style="background: var(--bg-light); padding: 1.5rem; border-radius: 8px;">
+                {% for group, accuracy in best_run.ood.group_accuracy.items() %}
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: between; margin-bottom: 0.25rem;">
+                        <span style="font-weight: 500;">{{ group }}</span>
+                        <span style="color: var(--primary-color); font-weight: bold;">{{ "%.3f"|format(accuracy) }}</span>
+                    </div>
+                    <div class="progress-bar" style="height: 6px;">
+                        <div class="progress-fill" data-progress="{{ (accuracy * 100)|round(1) }}" style="background: {% if accuracy >= 0.7 %}var(--success-color){% elif accuracy >= 0.5 %}var(--secondary-color){% else %}var(--accent-color){% endif %}"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Research Insights -->
+<div class="card">
+    <h2 style="color: var(--primary-color); margin-bottom: 1.5rem;">
+        🧠 AI Research Insights
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div class="alert alert-success">
+            <h4>🎯 Fairness Optimization</h4>
+            <p>The AI system identified and optimized for worst-group accuracy while maintaining overall performance. The selected strategy balances fairness across all demographic groups.</p>
+        </div>
+
+        <div class="alert alert-warning">
+            <h4>📊 Distribution Shift</h4>
+            <p>Performance gap between in-distribution and out-of-distribution data: {{ "%.1f%%"|format((best_run.id.accuracy - best_run.ood.accuracy) * 100) }}. Lower gaps indicate better generalization.</p>
+        </div>
+
+        <div class="alert alert-success">
+            <h4>⚡ Multi-Agent Strategy</h4>
+            <p>Strategy Agent, Research Agent, Critic Agent, and Judge Agent collaborated to propose and evaluate {{ num_experiments|default('multiple') }} different training approaches.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Download Section -->
+<div class="card">
+    <h2 style="color: var(--primary-color); margin-bottom: 1.5rem;">
+        📥 Download Research Results
+    </h2>
+
+    <div style="text-align: center; padding: 2rem;">
+        <p style="margin-bottom: 2rem; font-size: 1.1rem; color: var(--text-dark);">
+            Get complete experimental data including model weights, fairness analysis, and reproducibility package
+        </p>
+
+        <a href="/download/{{ timestamp }}" class="btn" style="font-size: 1.2rem; padding: 1rem 2rem;">
+            📦 Download Complete Results Package
+        </a>
+
+        <div style="margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-dark);">
+            <p>Package includes:</p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div>✓ Experiment results (JSON)</div>
+                <div>✓ Original dataset (CSV)</div>
+                <div>✓ Model configuration</div>
+                <div>✓ Fairness metrics</div>
+                <div>✓ Group performance data</div>
+                <div>✓ Strategy details</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Start New Analysis -->
+<div class="card">
+    <div style="text-align: center; padding: 2rem;">
+        <h3 style="color: var(--primary-color); margin-bottom: 1rem;">Analyze Another Dataset</h3>
+        <a href="/" class="btn btn-secondary">
+            🔬 Start New Fairness Analysis
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Performance Chart
+const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+new Chart(performanceCtx, {
+    type: 'bar',
+    data: {
+        labels: ['In-Distribution', 'Out-of-Distribution', 'Worst Group'],
+        datasets: [{
+            label: 'Accuracy',
+            data: [
+                {{ best_run.id.accuracy|default(0) }},
+                {{ best_run.ood.accuracy|default(0) }},
+                {{ best_run.ood.worst_group_accuracy|default(0) }}
+            ],
+            backgroundColor: [
+                'rgba(30, 61, 89, 0.8)',
+                'rgba(245, 200, 66, 0.8)',
+                'rgba(78, 205, 196, 0.8)'
+            ],
+            borderColor: [
+                'rgba(30, 61, 89, 1)',
+                'rgba(245, 200, 66, 1)',
+                'rgba(78, 205, 196, 1)'
+            ],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Model Performance Across Domains',
+                font: { size: 16 }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 1,
+                ticks: {
+                    callback: function(value) {
+                        return (value * 100).toFixed(0) + '%';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Group Performance Chart
+const groupCtx = document.getElementById('groupChart').getContext('2d');
+const groupData = {{ best_run.ood.group_accuracy|tojson|safe }};
+const groupLabels = Object.keys(groupData);
+const groupValues = Object.values(groupData);
+
+new Chart(groupCtx, {
+    type: 'doughnut',
+    data: {
+        labels: groupLabels,
+        datasets: [{
+            data: groupValues,
+            backgroundColor: [
+                'rgba(30, 61, 89, 0.8)',
+                'rgba(245, 200, 66, 0.8)',
+                'rgba(78, 205, 196, 0.8)',
+                'rgba(255, 107, 107, 0.8)',
+                'rgba(102, 126, 234, 0.8)',
+                'rgba(118, 75, 162, 0.8)'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Accuracy by Demographic Group',
+                font: { size: 16 }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.label + ': ' + (context.parsed * 100).toFixed(1) + '%';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Animate progress bars on page load
+setTimeout(animateProgressBars, 500);
+</script>
+{% endblock %}

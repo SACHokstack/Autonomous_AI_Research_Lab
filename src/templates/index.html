@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Prometheus Lab - Autonomous AI Research{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="color: var(--primary-color); margin-bottom: 1rem;">🚀 Autonomous Fairness Research Platform</h1>
+        <p style="font-size: 1.1rem; color: var(--text-dark); max-width: 800px; margin: 0 auto;">
+            Upload any binary classification dataset and let our multi-agent AI system automatically detect bias,
+            propose novel training strategies, and optimize for fairness across demographic groups.
+        </p>
+    </div>
+
+    <!-- Research Features -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number">🤖</div>
+            <div class="stat-label">Multi-Agent AI</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">🔍</div>
+            <div class="stat-label">Auto-Detection</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">📊</div>
+            <div class="stat-label">Fairness Optimization</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">⚡</div>
+            <div class="stat-label">Real-time Results</div>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <form method="post" enctype="multipart/form-data" id="uploadForm">
+        <div class="upload-area" id="uploadArea">
+            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.7;">📊</div>
+            <h3 style="color: var(--primary-color); margin-bottom: 1rem;">Upload Your Dataset</h3>
+            <p style="color: var(--text-dark); margin-bottom: 1.5rem;">
+                Drop your CSV file here or click to browse
+            </p>
+
+            <div class="file-input">
+                <label for="csv_file" class="btn">
+                    📁 Select CSV File
+                </label>
+                <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+            </div>
+
+            <div class="file-info" style="margin-top: 1rem; font-style: italic; color: var(--text-dark);"></div>
+
+            <div style="margin-top: 2rem;">
+                <button type="submit" class="btn btn-success" id="analyzeBtn">
+                    🔬 Analyze & Optimize for Fairness
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Loading State -->
+    <div id="loadingState" style="display: none;">
+        <div class="loading">
+            <div class="spinner"></div>
+            <h3 style="color: var(--primary-color); margin-top: 1rem;">Analyzing Your Dataset...</h3>
+            <div id="loadingProgress">
+                <div style="margin: 2rem 0;">
+                    <div style="margin-bottom: 0.5rem;">Auto-detecting target variable and protected attributes...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress1" data-progress="0"></div>
+                    </div>
+                </div>
+                <div style="margin: 2rem 0;">
+                    <div style="margin-bottom: 0.5rem;">Generating training strategies with multi-agent AI...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress2" data-progress="0"></div>
+                    </div>
+                </div>
+                <div style="margin: 2rem 0;">
+                    <div style="margin-bottom: 0.5rem;">Optimizing for worst-group accuracy...</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress3" data-progress="0"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="card">
+    <h2 style="color: var(--primary-color); text-align: center; margin-bottom: 2rem;">
+        🧠 How Prometheus Lab Works
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+        <div style="text-align: center; padding: 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+            <h3 style="color: var(--primary-color);">Auto-Detection</h3>
+            <p>Automatically identifies binary targets, protected attributes, and potential bias patterns in your dataset.</p>
+            <div class="research-badge">Computer Vision</div>
+            <div class="research-badge">NLP Analysis</div>
+        </div>
+
+        <div style="text-align: center; padding: 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🤖</div>
+            <h3 style="color: var(--primary-color);">Multi-Agent AI</h3>
+            <p>Strategy Agent, Research Agent, Critic Agent, and Judge Agent collaborate to propose optimal training approaches.</p>
+            <div class="research-badge">LangGraph</div>
+            <div class="research-badge">LLM Orchestration</div>
+        </div>
+
+        <div style="text-align: center; padding: 1rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+            <h3 style="color: var(--primary-color);">Real-Time Optimization</h3>
+            <p>Executes experiments with advanced techniques like Group DRO, reweighting, and robust training methods.</p>
+            <div class="research-badge">Group DRO</div>
+            <div class="research-badge">Fair ML</div>
+        </div>
+    </div>
+</div>
+
+<!-- Supported Techniques -->
+<div class="card">
+    <h2 style="color: var(--primary-color); text-align: center; margin-bottom: 2rem;">
+        🛠️ Advanced ML Techniques
+    </h2>
+
+    <div class="metric-grid">
+        <div class="metric-item">
+            <div class="metric-value">Group DRO</div>
+            <div class="metric-name">Distributional Robust Optimization</div>
+        </div>
+        <div class="metric-item">
+            <div class="metric-value">Reweighting</div>
+            <div class="metric-name">Class & Importance Sampling</div>
+        </div>
+        <div class="metric-item">
+            <div class="metric-value">Regularization</div>
+            <div class="metric-name">L1/L2 Penalties & Early Stopping</div>
+        </div>
+        <div class="metric-item">
+            <div class="metric-value">Domain Gen.</div>
+            <div class="metric-name">Cross-Domain Robustness</div>
+        </div>
+        <div class="metric-item">
+            <div class="metric-value">Focal Loss</div>
+            <div class="metric-name">Hard Example Mining</div>
+        </div>
+        <div class="metric-item">
+            <div class="metric-value">Adversarial</div>
+            <div class="metric-name">Robust Training Methods</div>
+        </div>
+    </div>
+</div>
+
+<!-- Example Datasets -->
+<div class="card">
+    <h2 style="color: var(--primary-color); text-align: center; margin-bottom: 2rem;">
+        📊 Example Research Applications
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+        <div class="alert alert-success">
+            <h4>🏛️ Criminal Justice</h4>
+            <p><strong>COMPAS Dataset:</strong> Recidivism prediction with racial and gender bias analysis</p>
+        </div>
+
+        <div class="alert alert-success">
+            <h4>🏥 Healthcare</h4>
+            <p><strong>Diabetes Dataset:</strong> Hospital readmission prediction across demographic groups</p>
+        </div>
+
+        <div class="alert alert-success">
+            <h4>💰 Finance</h4>
+            <p><strong>Credit Scoring:</strong> Fair lending decisions without discriminatory bias</p>
+        </div>
+
+        <div class="alert alert-success">
+            <h4>👥 Hiring</h4>
+            <p><strong>Recruitment:</strong> Unbiased candidate selection algorithms</p>
+        </div>
+    </div>
+</div>
+
+<!-- Technical Specifications -->
+<div class="card">
+    <h2 style="color: var(--primary-color); text-align: center; margin-bottom: 2rem;">
+        ⚙️ Technical Specifications
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+        <div>
+            <h4>🔗 Model Architecture</h4>
+            <ul style="list-style: none; padding: 0;">
+                <li>✓ Logistic Regression (scikit-learn)</li>
+                <li>✓ Support for L1/L2 regularization</li>
+                <li>✓ Class balancing strategies</li>
+                <li>✓ Domain adaptation techniques</li>
+            </ul>
+        </div>
+
+        <div>
+            <h4>🤖 LLM Integration</h4>
+            <ul style="list-style: none; padding: 0;">
+                <li>✓ Groq Llama 3.3-70B (fast inference)</li>
+                <li>✓ OpenAI GPT-4 (high quality)</li>
+                <li>✓ Google Gemini (multimodal)</li>
+                <li>✓ Auto-fallback providers</li>
+            </ul>
+        </div>
+
+        <div>
+            <h4>📊 Evaluation Metrics</h4>
+            <ul style="list-style: none; padding: 0;">
+                <li>✓ Worst Group Accuracy (primary)</li>
+                <li>✓ Overall OOD accuracy</li>
+                <li>✓ ID-OOD generalization gap</li>
+                <li>✓ Group-specific performance</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    // Hide upload form and show loading state
+    document.querySelector('.upload-area').style.display = 'none';
+    document.getElementById('loadingState').style.display = 'block';
+
+    // Animate progress bars
+    setTimeout(() => {
+        document.getElementById('progress1').style.width = '100%';
+    }, 1000);
+
+    setTimeout(() => {
+        document.getElementById('progress2').style.width = '100%';
+    }, 3000);
+
+    setTimeout(() => {
+        document.getElementById('progress3').style.width = '100%';
+    }, 5000);
+});
+
+// Add file validation
+document.getElementById('csv_file').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            alert('Please upload a CSV file.');
+            this.value = '';
+            return;
+        }
+
+        if (file.size > 50 * 1024 * 1024) { // 50MB limit
+            alert('File size too large. Please upload a file smaller than 50MB.');
+            this.value = '';
+            return;
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -46,11 +46,9 @@ Create a `.env` file with your API keys:
 ```bash
 # Required: Choose one LLM provider
 GROQ_API_KEY=your_groq_api_key_here          # Recommended: Fast & cheap
-OPENAI_API_KEY=your_openai_api_key_here      # Alternative
-GOOGLE_API_KEY=your_google_api_key_here      # Alternative
+      # Alternative
 
-# Optional: For enhanced features
-OUMI_API_KEY=your_oumi_api_key_here
+
 ```
 
 **Get API Keys:**
