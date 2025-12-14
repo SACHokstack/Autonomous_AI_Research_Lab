@@ -17,13 +17,17 @@ EXPERIMENTS_DIR = Path(__file__).resolve().parents[1] / "experiments"
 
 
 def encode_labels(y: pd.Series):
-    # Check if labels are already numeric (COMPAS) or need encoding (diabetes)
-    if y.dtype in ['int64', 'int32', 'float64', 'float32']:
-        # Already numeric, no encoding needed
-        return y
+    if y.dtype in ['int64', 'int32', 'float64', 'float32', 'bool']:
+        return y.astype(int)
     else:
-        # String labels (diabetes dataset), encode them
-        return y.apply(lambda v: 0 if v == "NO" else 1)
+        # Handle Adult "<=50K"/">50K" or diabetes "NO"/YES
+        if y.dtype == 'object':
+            if '<=50K' in y.values[0] or '>50K' in y.values[0]:
+                return (y == '>50K').astype(int)
+            else:
+                return y.apply(lambda v: 0 if v == "NO" else 1)
+        return y.astype(int)
+
 
 
 def run_experiment(config: StrategyConfig):
@@ -35,7 +39,7 @@ def run_experiment(config: StrategyConfig):
 
     # Keep metadata columns for grouping before any feature dropping
     ds = get_dataset()
-    group_cols = ['sex', 'race']  # COMPAS groups
+    group_cols = ds.protected_attrs
     meta_id_test = X_id_test[group_cols].copy()
     meta_ood_test = X_ood[group_cols].copy()
 

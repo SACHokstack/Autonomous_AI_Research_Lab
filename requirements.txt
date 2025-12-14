@@ -4,5 +4,9 @@ scikit-learn
 tableshift
 scipy
 oumi-sdk
-langgraph 
+langgraph
 langchain-groq
+flask
+gunicorn
+jinja2
+python-dotenv
