@@ -53,9 +53,7 @@ GROQ_API_KEY=your_groq_api_key_here          # Recommended: Fast & cheap
 
 **Get API Keys:**
 - **Groq** (Recommended): [console.groq.com](https://console.groq.com) - Free tier with Llama 3.3-70B
-- **OpenAI**: [platform.openai.com](https://platform.openai.com)
-- **Google**: [aistudio.google.com](https://aistudio.google.com)
-
+-
 ### 3. Run the Application
 
 **Development Mode:**
