@@ -1,3 +1,4 @@
+
 import pandas as pd
 
 def compute_group_id(df: pd.DataFrame) -> pd.Series:
