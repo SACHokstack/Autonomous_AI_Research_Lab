@@ -13,6 +13,24 @@ from .strategies import StrategyConfig
 from .run_experiment import run_experiment
 from .llm_client import call_llm_and_get_strategies
 
+# RAG and Knowledge Graph integration (optional - graceful fallback if not available)
+RAG_AVAILABLE = False
+KG_AVAILABLE = False
+
+try:
+    from .rag import RAGRetriever
+    RAG_AVAILABLE = True
+    print("RAG module loaded successfully")
+except ImportError as e:
+    print(f"RAG module not available: {e}")
+
+try:
+    from .knowledge_graph import FairnessKnowledgeGraph
+    KG_AVAILABLE = True
+    print("Knowledge Graph module loaded successfully")
+except ImportError as e:
+    print(f"Knowledge Graph module not available: {e}")
+
 
 
 class GraphState(TypedDict):
@@ -63,7 +81,43 @@ def load_results_node(state: GraphState) -> GraphState:
     return {**state, "all_runs": runs, "best_run": best}
 
 def strategy_node(state: GraphState) -> GraphState:
-    strategies, rationale = call_llm_and_get_strategies()
+    """
+    Strategy Agent: Proposes new training strategies.
+
+    Enhanced with RAG to retrieve similar past experiments
+    for context-aware strategy generation.
+    """
+    # Get RAG context if available
+    rag_context = ""
+    if RAG_AVAILABLE:
+        try:
+            retriever = RAGRetriever()
+            best = state.get("best_run")
+
+            if best:
+                # Retrieve similar experiments
+                metrics = {
+                    "wga": best["ood"].get("worst_group_accuracy", 0),
+                    "ood": best["ood"]["accuracy"],
+                    "gap": abs(best["id"]["accuracy"] - best["ood"]["accuracy"])
+                }
+                similar = retriever.retrieve_similar_experiments(metrics, k=3)
+
+                if similar:
+                    rag_context = "\n\n## Similar Past Experiments (from RAG)\n"
+                    for i, doc in enumerate(similar, 1):
+                        meta = doc.metadata
+                        rag_context += f"\n**Experiment {i}: {meta.get('name', 'Unknown')}**\n"
+                        rag_context += f"- WGA: {meta.get('wga', 0):.3f}, OOD: {meta.get('ood_acc', 0):.3f}\n"
+                        rag_context += f"- Group DRO: {meta.get('use_group_dro', False)}, "
+                        rag_context += f"Class Weight: {meta.get('class_weight', 'None')}\n"
+
+                    print(f"RAG: Retrieved {len(similar)} similar experiments for strategy context")
+        except Exception as e:
+            print(f"RAG retrieval failed (non-critical): {e}")
+
+    # Call LLM with optional RAG context
+    strategies, rationale = call_llm_and_get_strategies(additional_context=rag_context)
 
     return {
         **state,
@@ -72,32 +126,102 @@ def strategy_node(state: GraphState) -> GraphState:
     }
 
 def research_node(state: GraphState) -> GraphState:
+    """
+    Research Agent: Analyzes results and provides insights.
+
+    Enhanced with RAG to retrieve relevant experiment insights
+    for better analysis.
+    """
     best = state.get("best_run")
 
+    # Get RAG insights if available
+    rag_insights = ""
+    if RAG_AVAILABLE and best:
+        try:
+            retriever = RAGRetriever()
+            metrics = {
+                "wga": best["ood"].get("worst_group_accuracy", 0),
+                "ood": best["ood"]["accuracy"],
+                "gap": abs(best["id"]["accuracy"] - best["ood"]["accuracy"])
+            }
+            rag_insights = retriever.get_experiment_insights(metrics)
+            print("RAG: Generated experiment insights for research analysis")
+        except Exception as e:
+            print(f"RAG insights failed (non-critical): {e}")
+
     if best is None:
-        notes_prompt = "No results yet. Suggest generic improvements."
+        notes_prompt = "No results yet. Suggest generic improvements for ML fairness."
     else:
+        wga = best["ood"].get("worst_group_accuracy", best["ood"]["accuracy"])
+        gap = abs(best["ood"]["accuracy"] - best["id"]["accuracy"])
+
         notes_prompt = f"""
-Analyze this run like a research scientist.
+Analyze this run like a research scientist focusing on ML fairness.
 
-ID accuracy = {best['id']['accuracy']}
-OOD accuracy = {best['ood']['accuracy']}
+Current Metrics:
+- ID accuracy = {best['id']['accuracy']:.4f}
+- OOD accuracy = {best['ood']['accuracy']:.4f}
+- Worst Group Accuracy = {wga:.4f}
+- ID-OOD Gap = {gap:.4f}
 
-Give suggestions to reduce OOD gap.
+{rag_insights}
+
+Based on these results and similar experiments, provide:
+1. Analysis of current weaknesses
+2. Specific suggestions to improve worst-group accuracy
+3. Recommendations for reducing the ID-OOD gap
         """
 
     response = RESEARCH_LLM.invoke(notes_prompt).content
     return {**state, "research_notes": response}
 
 def critic_node(state: GraphState) -> GraphState:
-    cfgs = state.get("proposed_configs", [])
-    prompt = f"""
-You are the CRITIC agent.
-Evaluate these proposed strategies:
+    """
+    Critic Agent: Evaluates proposed strategies for risks.
 
+    Enhanced with Knowledge Graph to identify technique conflicts
+    and known risks.
+    """
+    cfgs = state.get("proposed_configs", [])
+
+    # Get Knowledge Graph risk analysis if available
+    kg_context = ""
+    if KG_AVAILABLE:
+        try:
+            kg = FairnessKnowledgeGraph()
+
+            for cfg in cfgs:
+                risks = kg.query_strategy_risks(cfg)
+                if risks:
+                    kg_context += f"\n### Risks for {cfg.get('name', 'Unknown')}:\n"
+                    for risk in risks:
+                        if risk["type"] == "conflict":
+                            kg_context += f"- **Conflict**: {risk['tech1']} and {risk['tech2']} "
+                            kg_context += f"(severity: {risk['severity']:.1f})\n"
+                            kg_context += f"  Reason: {risk['reason']}\n"
+                        else:
+                            kg_context += f"- **{risk['issue']}** for {risk['technique']} "
+                            kg_context += f"(probability: {risk['probability']:.1f})\n"
+
+            kg.close()
+            if kg_context:
+                print("KG: Retrieved risk analysis for proposed strategies")
+        except Exception as e:
+            print(f"Knowledge Graph risk analysis failed (non-critical): {e}")
+
+    prompt = f"""
+You are the CRITIC agent evaluating proposed ML fairness strategies.
+
+Evaluate these proposed strategies:
 {cfgs}
 
-Provide short critique and risks.
+{f"Knowledge Graph Risk Analysis:{kg_context}" if kg_context else ""}
+
+Provide:
+1. Critique of each strategy's feasibility
+2. Potential risks and failure modes
+3. Conflicts between techniques if any
+4. Recommendations for improvement
     """
 
     response = CRITIC_LLM.invoke(prompt).content
