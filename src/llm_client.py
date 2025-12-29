@@ -103,12 +103,21 @@ def parse_llm_strategies(raw_text: str) -> List[StrategyConfig]:
     return strategies
 
 
-def call_llm_and_get_strategies() -> Tuple[List[StrategyConfig], str]:
+def call_llm_and_get_strategies(additional_context: str = "") -> Tuple[List[StrategyConfig], str]:
     """
     Main entry point used by your agent.
     Returns (strategies_list, rationale_text)
+
+    Args:
+        additional_context: Optional additional context to append to the prompt
+                          (e.g., RAG-retrieved similar experiments)
     """
     prompt = _load_prompt()
+
+    # Append additional context if provided (e.g., from RAG)
+    if additional_context:
+        prompt = prompt + "\n\n" + additional_context
+
     rationale = "No rationale extracted."
 
     # === Try Oumi + OpenAI first (if available) ===
