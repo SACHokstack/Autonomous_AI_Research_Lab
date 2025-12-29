@@ -10,3 +10,12 @@ flask
 gunicorn
 jinja2
 python-dotenv
+
+# RAG (Phase 1)
+chromadb>=0.4.0
+sentence-transformers>=2.2.0
+langchain>=0.1.0
+langchain-community>=0.0.10
+
+# Knowledge Graph (Phase 2)
+neo4j>=5.0.0
