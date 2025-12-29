@@ -16,7 +16,34 @@ class AutoDataset:
 
     def load_data(self):
         df = pd.read_csv(self.config['df_path'])
-        df[self.config['target_col']] = (df[self.config['target_col']] == 1).astype(int)  # Ensure binary
+
+        # Handle different target column formats
+        target_col = self.config['target_col']
+        target_values = df[target_col].unique()
+
+        # If already binary numeric (0, 1)
+        if set(target_values).issubset({0, 1}):
+            df[target_col] = df[target_col].astype(int)
+        # If numeric but needs to be made binary
+        elif all(isinstance(v, (int, float)) for v in target_values if pd.notna(v)):
+            df[target_col] = (df[target_col] == 1).astype(int)
+        # If string values, handle common patterns
+        else:
+            target_values_clean = [str(v).upper() for v in target_values if pd.notna(v)]
+            if 'NO' in target_values_clean and any(x in target_values_clean for x in ['>30', '<30', 'YES']):
+                # Readmission case: NO -> 0, any readmission (<30 or >30) -> 1
+                df[target_col] = (~(df[target_col].str.upper() == 'NO')).astype(int)
+            elif set(target_values_clean).issubset({'YES', 'NO'}):
+                # YES/NO case
+                df[target_col] = (df[target_col].str.upper() == 'YES').astype(int)
+            elif set(target_values_clean).issubset({'TRUE', 'FALSE'}):
+                # TRUE/FALSE case
+                df[target_col] = (df[target_col].str.upper() == 'TRUE').astype(int)
+            else:
+                # Default: convert to binary by checking if equal to the last unique value
+                positive_class = sorted(target_values)[-1]
+                df[target_col] = (df[target_col] == positive_class).astype(int)
+
         return df
 
     def make_splits(self):
@@ -49,10 +76,20 @@ class AutoDataset:
         return X_train, y_train, X_id_test, y_id_test, X_ood, y_ood
 
     def compute_group_id(self, df: pd.DataFrame) -> pd.Series:
-        attrs = []
+        # Convert each protected attribute to string and combine element-wise
+        attr_series = []
         for attr in self.config['protected_attrs']:
-            attrs.append(df[attr].fillna('Unknown').astype(str))
-        return "_".join(attrs)
+            attr_series.append(df[attr].fillna('Unknown').astype(str))
+
+        # Combine all attributes element-wise with "_" separator
+        if len(attr_series) == 1:
+            return attr_series[0]
+        else:
+            # Use pandas string concatenation for element-wise joining
+            result = attr_series[0]
+            for series in attr_series[1:]:
+                result = result + "_" + series
+            return result
 
 
 @dataclass
